@@ -3,231 +3,126 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AI 批改評分工具</title>
+    <title>題庫健康水位監控儀表板</title>
     <link rel="stylesheet" href="styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0"
     />
   </head>
   <body>
-    <header class="app-header">
-      <div class="brand">
-        <span class="brand__title">RAI/AIEC 評測工具</span>
-        <span class="brand__subtitle">批改管理</span>
-      </div>
-      <div class="header-actions">
-        <button class="btn btn--ghost" type="button">通知</button>
-        <button class="btn btn--primary" type="button">登入或建立帳號</button>
-      </div>
+    <header class="hero">
+      <nav class="topbar" aria-label="主要導覽">
+        <div class="brand">
+          <span class="brand__mark">AIEC</span>
+          <div>
+            <p class="brand__eyebrow">Question Bank Ops</p>
+            <h1>題庫健康水位監控儀表板</h1>
+          </div>
+        </div>
+        <div class="topbar__actions">
+          <span class="sync-pill">前端展示版 · 可串接 API</span>
+          <button class="btn btn--ghost" type="button">匯出 PDF</button>
+        </div>
+      </nav>
+
+      <section class="hero__content">
+        <div>
+          <p class="section-kicker">資安 · 公平 · 隱私</p>
+          <h2>用兩條安全水位線，即時掌握各難易度題數是否足夠。</h2>
+          <p>
+            以難易度為 X 軸，將各評估面向的長條圖依子指標切分；同時比對「單張考卷配比安全線」與「下月專案需求安全線」，協助提早發現題庫缺口。
+          </p>
+        </div>
+        <div class="hero-card" aria-label="整體健康狀態摘要">
+          <span>整體健康分數</span>
+          <strong id="overall-score">—</strong>
+          <small id="overall-description">計算中</small>
+        </div>
+      </section>
     </header>
 
-    <main class="app-main">
-      <section class="filter-bar" aria-label="批改條件">
-        <div class="filter-bar__group">
-          <label class="filter-bar__label" for="session-select">考試場次</label>
-          <select id="session-select" class="filter-bar__control">
-            <option>112 年 5 月教師甄試</option>
-            <option>112 年 11 月教師甄試</option>
-            <option>113 年模擬試</option>
-          </select>
+    <main class="app-shell">
+      <section class="control-panel" aria-label="監控參數設定">
+        <div class="control-panel__header">
+          <div>
+            <p class="section-kicker">Dashboard Controls</p>
+            <h2>監控參數</h2>
+          </div>
+          <button class="btn btn--primary" id="reset-button" type="button">還原預設值</button>
         </div>
-        <div class="filter-bar__group">
-          <label class="filter-bar__label" for="paper-select">考卷類型</label>
-          <select id="paper-select" class="filter-bar__control">
-            <option>國語文閱讀測驗</option>
-            <option>國語文作文</option>
-            <option>數理邏輯</option>
-          </select>
-        </div>
-        <div class="filter-bar__group">
-          <label class="filter-bar__label" for="grader-select">批改老師</label>
-          <select id="grader-select" class="filter-bar__control">
-            <option>全部老師</option>
-            <option>林老師</option>
-            <option>張老師</option>
-            <option>楊老師</option>
-          </select>
-        </div>
-        <div class="filter-bar__group">
-          <label class="filter-bar__label" for="status-select">批改狀態</label>
-          <select id="status-select" class="filter-bar__control">
-            <option>全部狀態</option>
-            <option>待批改</option>
-            <option>退回重批</option>
-            <option>已完成</option>
-          </select>
-        </div>
-        <div class="filter-bar__actions">
-          <button class="btn btn--outline" type="button">匯出報表</button>
-          <button class="btn btn--primary" type="button">新增批改任務</button>
+
+        <div class="control-grid">
+          <label class="field">
+            <span>預估下月專案數量</span>
+            <input id="project-count" type="number" min="1" max="60" value="12" />
+            <small>用來計算第二條「專案需求安全線」。</small>
+          </label>
+          <label class="field">
+            <span>每個專案預估考卷份數</span>
+            <input id="papers-per-project" type="number" min="1" max="80" value="8" />
+            <small>專案數 × 考卷份數 × 每卷該面向題數。</small>
+          </label>
+          <label class="field">
+            <span>每張考卷總題數</span>
+            <input id="questions-per-paper" type="number" min="5" max="80" value="20" />
+            <small>搭配三個評估面向的比例，推估基本水位。</small>
+          </label>
+          <label class="field">
+            <span>題目重複使用緩衝係數</span>
+            <input id="reuse-buffer" type="number" min="1" max="8" step="0.5" value="3" />
+            <small>數值越高，代表需準備更多不同題目。</small>
+          </label>
         </div>
       </section>
 
-      <div class="dashboard">
-        <aside class="panel" aria-label="考生清單">
-          <header class="panel__header">
-            <div>
-              <h2 class="panel__title">考生列表</h2>
-              <p class="panel__subtitle">共 24 筆資料 · 按批改進度排序</p>
-            </div>
-            <div class="panel__tools">
-              <button class="icon-button" type="button" aria-label="搜尋考生">
-                <span class="material-symbol">search</span>
-              </button>
-              <button class="icon-button" type="button" aria-label="重新整理">
-                <span class="material-symbol">refresh</span>
-              </button>
-            </div>
-          </header>
+      <section class="summary-grid" id="summary-grid" aria-label="三大評估面向摘要"></section>
 
-          <div class="table-wrapper">
-            <table class="data-table" id="candidate-table">
-              <thead>
-                <tr>
-                  <th scope="col">考生</th>
-                  <th scope="col">AI 初評</th>
-                  <th scope="col">老師批改</th>
-                  <th scope="col">狀態</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </aside>
+      <section class="dashboard-grid" id="dimension-panels" aria-label="題庫健康水位圖表"></section>
 
-        <section class="panel panel--wide" aria-label="批改詳情">
-          <header class="panel__header">
-            <div>
-              <h2 class="panel__title">批改內容</h2>
-              <p class="panel__subtitle" id="candidate-name">請先選擇左側考生</p>
-            </div>
-            <div class="panel__tools">
-              <button class="btn btn--ghost" type="button">退回重批</button>
-              <button class="btn btn--primary" type="button">送出成績</button>
-            </div>
-          </header>
-
-          <div class="detail-layout">
-            <div class="detail-layout__left">
-              <section class="info-card">
-                <h3 class="info-card__title">考生資訊</h3>
-                <dl class="info-grid" id="candidate-info">
-                  <div>
-                    <dt>准考證號</dt>
-                    <dd>—</dd>
-                  </div>
-                  <div>
-                    <dt>身份證號</dt>
-                    <dd>—</dd>
-                  </div>
-                  <div>
-                    <dt>分發老師</dt>
-                    <dd>—</dd>
-                  </div>
-                  <div>
-                    <dt>AI 建議等級</dt>
-                    <dd>—</dd>
-                  </div>
-                </dl>
-              </section>
-
-              <section class="info-card">
-                <header class="info-card__header">
-                  <h3 class="info-card__title">題目列表</h3>
-                  <div class="legend">
-                    <span class="legend__item legend__item--ai">AI 建議</span>
-                    <span class="legend__item legend__item--manual">人工評分</span>
-                  </div>
-                </header>
-                <div class="table-wrapper table-wrapper--compact">
-                  <table class="data-table" id="question-table">
-                    <thead>
-                      <tr>
-                        <th scope="col">題號</th>
-                        <th scope="col">AI 評分</th>
-                        <th scope="col">老師評分</th>
-                        <th scope="col">備註</th>
-                      </tr>
-                    </thead>
-                    <tbody></tbody>
-                  </table>
-                </div>
-              </section>
-            </div>
-
-            <div class="detail-layout__right">
-              <section class="info-card info-card--essay">
-                <header class="info-card__header">
-                  <div>
-                    <h3 class="info-card__title">考生作答</h3>
-                    <p class="info-card__subtitle" id="question-title"></p>
-                  </div>
-                  <div class="toggle-group" role="group" aria-label="評分模式">
-                    <button class="toggle is-active" data-view="essay">作答內容</button>
-                    <button class="toggle" data-view="ai">AI 建議</button>
-                    <button class="toggle" data-view="rubric">評分規準</button>
-                  </div>
-                </header>
-                <article class="essay-view" id="essay-view"></article>
-              </section>
-
-              <section class="info-card">
-                <header class="info-card__header">
-                  <h3 class="info-card__title">批改紀錄</h3>
-                  <button class="btn btn--ghost btn--small" type="button">新增備註</button>
-                </header>
-                <ul class="timeline" id="timeline"></ul>
-              </section>
-            </div>
-          </div>
-        </section>
-      </div>
+      <section class="insight-panel" aria-label="補題優先順序">
+        <div>
+          <p class="section-kicker">Action Items</p>
+          <h2>補題優先順序</h2>
+          <p>依據目前題庫數量與兩條安全水位線的差距，自動列出最需要補強的面向與難易度。</p>
+        </div>
+        <ol class="priority-list" id="priority-list"></ol>
+      </section>
     </main>
 
-    <template id="candidate-row">
-      <tr>
-        <th scope="row">
-          <div class="candidate">
-            <span class="candidate__name"></span>
-            <span class="candidate__id"></span>
-          </div>
-        </th>
-        <td><span class="badge badge--ai"></span></td>
-        <td><span class="badge badge--manual"></span></td>
-        <td><span class="status-pill"></span></td>
-      </tr>
-    </template>
-
-    <template id="question-row">
-      <tr>
-        <th scope="row"></th>
-        <td>
-          <span class="score"></span>
-          <span class="score-trend"></span>
-        </td>
-        <td>
-          <span class="score"></span>
-          <span class="score-trend"></span>
-        </td>
-        <td class="note"></td>
-      </tr>
-    </template>
-
-    <template id="timeline-item">
-      <li class="timeline__item">
-        <span class="timeline__time"></span>
-        <div class="timeline__content">
-          <p class="timeline__title"></p>
-          <p class="timeline__description"></p>
+    <template id="summary-card-template">
+      <article class="summary-card">
+        <div class="summary-card__topline">
+          <span class="summary-card__icon"></span>
+          <span class="summary-card__status"></span>
         </div>
-      </li>
+        <h3></h3>
+        <p></p>
+        <div class="summary-card__metrics">
+          <div><strong data-total></strong><span>總題數</span></div>
+          <div><strong data-paper-line></strong><span>考卷水位</span></div>
+          <div><strong data-demand-line></strong><span>需求水位</span></div>
+        </div>
+      </article>
+    </template>
+
+    <template id="dimension-panel-template">
+      <article class="dimension-panel">
+        <header class="dimension-panel__header">
+          <div>
+            <p class="section-kicker"></p>
+            <h2></h2>
+          </div>
+          <div class="health-badge"></div>
+        </header>
+        <div class="chart-wrap">
+          <div class="chart-y-axis" aria-hidden="true"></div>
+          <div class="bar-chart"></div>
+        </div>
+        <div class="legend-row"></div>
+      </article>
     </template>
 
     <script src="script.js"></script>
